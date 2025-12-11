@@ -62,22 +62,15 @@
 }
 
 .AddedBusStopCodeCss {
-  /* margin-top: 10px;
-  margin-bottom: 10px; */
-  /* text-align: center;
-  justify-content: center; */
-  justify-content: space-between;
-  border: 3px solid #61dafb;
-  border-radius: 10px;
-  /* width: 50%;
-  margin:auto; */
+  justify-content: space-around;
   align-items: center;
+  margin-bottom: 2px;
 }
 
 .AddedBusStopBox {
   width: 50%;
   margin-top: 100px;
-  margin: auto;
+  margin: auto;  
 }
 
 .PreviewBusTimingsBox {

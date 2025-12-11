@@ -4,14 +4,7 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import React from 'react';
 
-function AddBusStopCode() {
-    const [busStopCode, setBusStopCode] = React.useState('');
-
-    function addBusStop (event) {
-        // function to add bus stop code
-        event.preventDefault();
-        console.log("Bus stop code added: ", busStopCode);
-    }
+function AddBusStopCode({busStopCode, setBusStopCode, addBusStop}) {
 
     return (
         <Box component="form" onSubmit={addBusStop}>
