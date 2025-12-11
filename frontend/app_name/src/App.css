@@ -1,4 +1,4 @@
-.App {
+/* .App {
   text-align: center;
 }
 
@@ -35,4 +35,63 @@
   to {
     transform: rotate(360deg);
   }
+} */
+
+.App {
+  font-family: Roboto;
+  margin: auto;
+  width: 80%;
+  border: 3px solid #73AD21;
+}
+
+.HeadOne {
+  color: #000000;
+  text-align: center;
+  font-size: 50px;
+  margin: 10px;
+}
+
+.AddBusStopCodeCss {
+  /* margin-top: 10px;
+  margin-bottom: 10px; */
+  width: 50%;
+  margin: auto;
+  text-align: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.AddedBusStopCodeCss {
+  /* margin-top: 10px;
+  margin-bottom: 10px; */
+  /* text-align: center;
+  justify-content: center; */
+  justify-content: space-between;
+  border: 3px solid #61dafb;
+  border-radius: 10px;
+  /* width: 50%;
+  margin:auto; */
+  align-items: center;
+}
+
+.AddedBusStopBox {
+  width: 50%;
+  margin-top: 100px;
+  margin: auto;
+}
+
+.PreviewBusTimingsBox {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.PreviewBusTimingsImage {
+  width: 800px;
+  height: 480px;
+  border: 3px solid #61dafb;
+  border-radius: 5px;
 }
