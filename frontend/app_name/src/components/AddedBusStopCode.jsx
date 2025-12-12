@@ -26,10 +26,19 @@ function listAddedBusStops(sharedBusStopCodes, removeBusStopCode) {
     return <ul>{allBusStops}</ul>;
 }
 
-function AddedBusStopCode({sharedBusStopCodes, removeBusStopCode}) {
+function AddedBusStopCode({sharedBusStopCodes, removeBusStopCode, confirmBusCodes}) {
   return (
     <Box className='AddedBusStopBox'>
-        <Typography variant="h6">Added Bus Stop Codes</Typography>
+            <Grid sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px'}}>
+                <Typography variant="h6">Added Bus Stop Codes</Typography>
+                <Button 
+                    variant="contained" 
+                    color="primary"
+                    onClick={() => confirmBusCodes()}
+                >
+                    Confirm bus codes
+                </Button>
+            </Grid>
         <Box sx={{border: '3px solid #61dafb', borderRadius: '10px'}}>
             {listAddedBusStops(sharedBusStopCodes, removeBusStopCode)}
         </Box>

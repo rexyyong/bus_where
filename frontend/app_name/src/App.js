@@ -59,6 +59,31 @@ function App() {
     }
   }
 
+  // function to send confirmed bus stop codes to backend
+  function confirmBusCodes() {
+    console.log("Confirming bus stop codes:", sharedBusStopCodes);
+    // prepare payload to send to backend
+    let payload = [];
+    for (let busStopCodes of sharedBusStopCodes) {
+      payload.push(busStopCodes.code);
+    }
+    console.log("Payload to send to backend:", payload);
+    fetch(`${process.env.REACT_APP_BUS_ARRIVAL_BACKEND_LINK}/api/confirm-bus-codes`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+    .then(response => response.json())
+    .then(data => {
+      console.log('Successfully confirmed bus stop codes:', data);
+    })
+    .catch((error) => {
+      console.error('Error confirming bus stop codes:', error);
+    });
+  }
+
   return (
     <div className="App">
       <HeaderOne />
@@ -70,6 +95,7 @@ function App() {
       <AddedBusStopCode
         sharedBusStopCodes={sharedBusStopCodes}
         removeBusStopCode={removeBusStopCode}
+        confirmBusCodes={confirmBusCodes}
       />
       <PreviewBusTimings
         getBusTimings={getBusTimings}
