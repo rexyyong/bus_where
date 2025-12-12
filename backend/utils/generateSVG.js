@@ -6,6 +6,16 @@ function generateSVG(allBusData) {
     const PADDING = 20;
     const HEADER_HEIGHT = 50;
     
+    // Get Current Time 
+    const now = new Date();
+    // Format time as HH:MM AM/PM
+    const timeString = now.toLocaleTimeString('en-SG', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+    });
+    const updateText = `Updated: ${timeString}`;
+
     const numStops = allBusData.length;
     const columnWidth = (WIDTH - (PADDING * 2)) / numStops;
     const availableHeight = HEIGHT - HEADER_HEIGHT;
@@ -73,6 +83,15 @@ function generateSVG(allBusData) {
         // Move to next column
         xPosition += columnWidth;
     }
+
+    // 2. Add Timestamp at Bottom Right
+    // x = WIDTH - PADDING (right align anchor)
+    // y = HEIGHT - 10 (padding from bottom)
+    svgContent += `
+    <text x="${WIDTH - 10}" y="${HEIGHT - 10}" font-size="20" font-family="Arial" font-weight="normal" fill="black" text-anchor="end">
+        ${updateText}
+    </text>
+    `;
     
     svgContent += `</svg>`;
     
@@ -87,14 +106,12 @@ function generateBusIcon(type) {
     let icon = '';
     
     if (type === 'SD') {
-        // Single Deck - one rectangle
         icon = `<svg width="${iconWidth}" height="${iconHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 16">
             <rect x="2" y="3" width="26" height="8" fill="none" stroke="black" stroke-width="1.5"/>
             <circle cx="8" cy="14" r="1.5" fill="black"/>
             <circle cx="24" cy="14" r="1.5" fill="black"/>
         </svg>`;
     } else if (type === 'DD') {
-        // Double Deck - two stacked rectangles
         icon = `<svg width="${iconWidth}" height="${iconHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 16">
             <rect x="2" y="1" width="26" height="5" fill="none" stroke="black" stroke-width="1.5"/>
             <rect x="2" y="6" width="26" height="5" fill="none" stroke="black" stroke-width="1.5"/>
@@ -102,7 +119,6 @@ function generateBusIcon(type) {
             <circle cx="24" cy="14" r="1.5" fill="black"/>
         </svg>`;
     } else if (type === 'BD') {
-        // Bendy - two buses together (double length)
         icon = `<svg width="${iconWidth}" height="${iconHeight}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 16">
             <rect x="2" y="3" width="13" height="8" fill="none" stroke="black" stroke-width="1.5"/>
             <rect x="15" y="3" width="13" height="8" fill="none" stroke="black" stroke-width="1.5"/>
