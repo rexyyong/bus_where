@@ -3,6 +3,7 @@ const axios = require('axios');
 require('dotenv').config();
 const mongoose = require('mongoose');
 const xml2js = require('xml2js');
+const sharp = require('sharp');
 
 const app = express();
 const PORT = 8080;
@@ -13,6 +14,7 @@ const allowedOrigins = [process.env.allowed_origin];
 const {extractRelevantBusData} = require('./utils/extractRelevantBusData');
 const {getBusStopDetails} = require('./utils/getBusStopDetails');
 const {generateSVG} = require('./utils/generateSVG');
+const {packTo1Bit} = require('./utils/packTo1Bit');
 
 
 // connect mongodb
@@ -222,12 +224,34 @@ app.get('/api/create-bus-timings-image', async (req, res) => {
     const svgContent = generateSVG(relevantBusData);
 
     // Return SVG to frontend/client
-    res.setHeader('Content-Type', 'image/svg+xml');
-    res.status(200).send(svgContent);
+    // res.setHeader('Content-Type', 'image/svg+xml');
+    // res.status(200).send(svgContent);
 
     // TODO: call function to convert SVG to PNG using sharp
-    // TODO: call function to convert PNG to format to send to ESP32 for display on e-ink screen
+    try {
+        const rawBuffer = await sharp(Buffer.from(svgContent))
+            .resize(800, 480, { // Enforce your screen resolution
+                fit: 'contain',
+                background: { r: 255, g: 255, b: 255, alpha: 1 } 
+            })
+            .toColourspace('b-w') // Convert to grayscale
+            .raw() // Output raw uncompressed pixel data (1 byte per pixel)
+            .toBuffer();
 
+        // 3. Pack to 1-bit binary
+        const finalBuffer = packTo1Bit(rawBuffer);
+
+        // 4. Send as binary stream
+        res.setHeader('Content-Type', 'application/octet-stream');
+        res.setHeader('Content-Length', finalBuffer.length);
+        res.send(finalBuffer);
+        
+        console.log("Sent binary bitmap to ESP32. Size:", finalBuffer.length);
+
+    } catch (err) {
+        console.error("Image processing error:", err);
+        res.status(500).send("Image conversion failed");
+    }
 });
 
 app.listen(PORT, () => {

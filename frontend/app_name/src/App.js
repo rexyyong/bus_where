@@ -42,23 +42,6 @@ function App() {
   }, [sharedBusStopCodes]);
 
 
-  //function to get bus timings from backend API
-  function getBusTimings() {
-    console.log("Fetching bus timings for bus stop codes:", sharedBusStopCodes);
-    for (let busStopCodes of sharedBusStopCodes) {
-      const code = busStopCodes.code;
-      console.log(`${process.env.REACT_APP_BUS_ARRIVAL_BACKEND_LINK}/api/bus-arrival/${code}`);
-      fetch(`${process.env.REACT_APP_BUS_ARRIVAL_BACKEND_LINK}/api/bus-arrival/${code}`)
-        .then(response => response.json())
-        .then(data => {
-          console.log(`Bus timings for stop code ${code}:`, data);
-        })
-        .catch(error => {
-          console.error('Error fetching bus timings:', error);
-        });
-    }
-  }
-
   // function to send confirmed bus stop codes to backend
   function confirmBusCodes() {
     console.log("Confirming bus stop codes:", sharedBusStopCodes);
@@ -97,10 +80,7 @@ function App() {
         removeBusStopCode={removeBusStopCode}
         confirmBusCodes={confirmBusCodes}
       />
-      <PreviewBusTimings
-        getBusTimings={getBusTimings}
-      />
-      <ConvertedBinaryImage />
+      <PreviewBusTimings />
     </div>
    );
 }
