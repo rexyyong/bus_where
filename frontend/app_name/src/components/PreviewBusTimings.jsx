@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -8,72 +8,81 @@ function PreviewBusTimings() {
   const canvasRef = useRef(null);
   const [status, setStatus] = useState("Idle");
 
+  // We wrap the fetch logic in useCallback (optional but good practice) 
+  // or simply define it inside the component.
   const fetchAndDrawBinary = async () => {
     setStatus("Fetching binary from backend...");
     try {
-      // 1. Fetch the RAW binary data (Same endpoint ESP32 uses)
-      // Make sure this matches your actual backend route
       const response = await fetch(`${process.env.REACT_APP_BUS_ARRIVAL_BACKEND_LINK}/api/create-bus-timings-image`);
       
       if (!response.ok) {
         throw new Error(`Server Error: ${response.status}`);
       }
 
-      // 2. Get data as ArrayBuffer
       const blob = await response.blob();
       const buffer = await blob.arrayBuffer();
       const packedView = new Uint8Array(buffer);
 
-      // Validation: 800 * 480 pixels / 8 bits per byte = 48,000 bytes
       if (packedView.length !== 48000) {
         setStatus(`Error: Received ${packedView.length} bytes. Expected 48,000.`);
         return;
       }
 
-      // 3. Render to Canvas (Unpacking Logic)
       const canvas = canvasRef.current;
+      // Safety check: ensure canvas exists before drawing
+      if (!canvas) return; 
+
       const ctx = canvas.getContext('2d');
       const width = 800;
       const height = 480;
 
-      // Create a blank image buffer for the canvas (RGBA format)
       const imgData = ctx.createImageData(width, height);
-      const data = imgData.data; // This is a 1D array: [R, G, B, A, R, G, B, A...]
+      const data = imgData.data; 
 
-      let pixelIndex = 0; // Pointer for the target Canvas array
+      let pixelIndex = 0; 
 
-      // Loop through every byte of the packed binary
       for (let i = 0; i < packedView.length; i++) {
         const byte = packedView[i];
-
-        // Loop through the 8 bits inside this byte
         for (let bit = 0; bit < 8; bit++) {
-          // Extract the single bit (MSB first)
-          // (1 << 7) checks the first bit, (1 << 6) the second, etc.
           const mask = 1 << (7 - bit);
           const isWhite = (byte & mask) !== 0;
+          const color = isWhite ? 255 : 0; 
 
-          // Convert 1-bit color to 32-bit RGBA color
-          const color = isWhite ? 255 : 0; // 255 = White, 0 = Black
+          data[pixelIndex]     = color; 
+          data[pixelIndex + 1] = color; 
+          data[pixelIndex + 2] = color; 
+          data[pixelIndex + 3] = 255;   
 
-          data[pixelIndex]     = color; // Red
-          data[pixelIndex + 1] = color; // Green
-          data[pixelIndex + 2] = color; // Blue
-          data[pixelIndex + 3] = 255;   // Alpha (Fully Opaque)
-
-          pixelIndex += 4; // Move to the next pixel block
+          pixelIndex += 4; 
         }
       }
 
-      // Paint the pixels onto the canvas
       ctx.putImageData(imgData, 0, 0);
-      setStatus("Display Updated (Binary Verified)");
+      
+      // Update the status with the current time so you know it worked
+      const time = new Date().toLocaleTimeString();
+      setStatus(`Display Updated at ${time} (Binary Verified)`);
 
     } catch (error) {
       console.error('Error fetching binary:', error);
       setStatus("Failed to fetch data");
     }
   };
+
+  //  Auto-Update Logic 
+  useEffect(() => {
+    // 1. Fetch immediately when the component mounts
+    fetchAndDrawBinary();
+
+    // 2. Set up a timer to fetch every 60 seconds (60000 ms)
+    const intervalId = setInterval(() => {
+      console.log("Auto-refreshing bus timings...");
+      fetchAndDrawBinary();
+    }, 60000);
+
+    // 3. Cleanup: Stop the timer if the user leaves the page
+    return () => clearInterval(intervalId);
+  }, []); // Empty dependency array [] means "run once on mount"
 
   return (
     <Box className='PreviewBusTimingsBox' sx={{ p: 2, border: '1px solid #ddd', mt: 2 }}>
@@ -84,7 +93,7 @@ function PreviewBusTimings() {
           color="primary"
           onClick={fetchAndDrawBinary}
         >
-          Refresh Timings
+          Refresh Now
         </Button>
       </Grid>
       
@@ -99,13 +108,12 @@ function PreviewBusTimings() {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: '#ccc', // Grey background to see the white canvas clearly
+          backgroundColor: '#ccc',
           padding: '10px',
           border: '1px dashed #999',
           overflow: 'auto' 
         }}
       >
-        {/* The Canvas matches the physical screen resolution */}
         <canvas 
           ref={canvasRef} 
           width={800} 
