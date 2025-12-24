@@ -33,7 +33,7 @@ GxEPD2_BW<GxEPD2_750_T7, GxEPD2_750_T7::HEIGHT> display(GxEPD2_750_T7(EPD_CS, EP
 
 const char* ssid      = "wifi";      
 const char* password  = "password";  
-const char* serverUrl = "http://192.168.1.7:8080/api/create-bus-timings-image"; 
+const char* serverUrl = "server"; 
 const size_t IMAGE_SIZE = 48000;
 uint8_t* imageBuffer = nullptr;
 
@@ -151,26 +151,76 @@ void connectToWiFi() {
 
 void fetchAndDrawImage() {
   HTTPClient http;
-  http.begin(serverUrl);
-  http.setTimeout(8000); 
   
+  // 1. Set a long timeout (30 seconds) for the network connection
+  http.setConnectTimeout(30000); 
+  http.setTimeout(30000);        
+  
+  http.begin(serverUrl);
   int httpCode = http.GET();
 
   if (httpCode == 200) {
-    if (http.getSize() == IMAGE_SIZE) {
+    int totalLen = http.getSize();
+    Serial.printf("Server file size: %d\n", totalLen);
+
+    if (totalLen == IMAGE_SIZE) {
       WiFiClient *stream = http.getStreamPtr();
-      stream->readBytes(imageBuffer, IMAGE_SIZE);
       
-      // Safety: Turn off WiFi to save power/prevent brownout
-      WiFi.disconnect(true);
-      WiFi.mode(WIFI_OFF);
+      // ----------------------------------------------------------------
+      // ROBUST DOWNLOAD LOOP
+      // ----------------------------------------------------------------
+      int bytesDownloaded = 0;
+      unsigned long startTime = millis();
       
-      Serial.println("Drawing...");
-      display.drawImage(imageBuffer, 0, 0, 800, 480, false, false, false);
-      Serial.println("Done!");
+      // Loop until we get 48000 bytes OR we timeout (30s)
+      while (bytesDownloaded < IMAGE_SIZE && (millis() - startTime < 30000)) {
+        size_t available = stream->available();
+        
+        if (available > 0) {
+          // Calculate how much to read right now (don't overflow buffer)
+          int remaining = IMAGE_SIZE - bytesDownloaded;
+          int readNow = (available < remaining) ? available : remaining;
+          
+          // Read chunk into the correct spot in memory
+          // imageBuffer + bytesDownloaded = Pointer math to move forward in array
+          stream->readBytes(imageBuffer + bytesDownloaded, readNow);
+          
+          bytesDownloaded += readNow;
+          
+          // Reset timeout timer every time we get data
+          startTime = millis(); 
+          
+          // Optional: Print progress every 10KB so you know it's alive
+          if (bytesDownloaded % 10000 == 0) {
+             Serial.printf("Progress: %d / %d\n", bytesDownloaded, IMAGE_SIZE);
+          }
+        } else {
+          // No data waiting? Wait 10ms and check again (don't quit!)
+          delay(10);
+        }
+      }
+      // ----------------------------------------------------------------
+
+      Serial.printf("\nFinal Download Count: %d bytes\n", bytesDownloaded);
+
+      if (bytesDownloaded == IMAGE_SIZE) {
+        // SUCCESS!
+        WiFi.disconnect(true);
+        WiFi.mode(WIFI_OFF);
+        Serial.println("WiFi OFF. Drawing Bitmap...");
+        
+        display.drawImage(imageBuffer, 0, 0, 800, 480, false, false, false);
+        Serial.println("Done!");
+        
+      } else {
+        Serial.println("ERROR: Download Timed Out. Incomplete Data.");
+      }
+    } else {
+      Serial.printf("Error: Server sent %d bytes (Expected 48000)\n", totalLen);
     }
   } else {
-    Serial.printf("HTTP Failed: %d\n", httpCode);
+    Serial.printf("HTTP GET Failed: %d\n", httpCode);
   }
+  
   http.end();
 }

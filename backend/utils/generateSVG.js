@@ -6,14 +6,15 @@ function generateSVG(allBusData) {
     const PADDING = 20;
     const HEADER_HEIGHT = 50;
     
-    // Get Current Time 
+    // Get Current Singapore Time 
     const now = new Date();
-    // Format time as HH:MM AM/PM
     const timeString = now.toLocaleTimeString('en-SG', { 
+        timeZone: 'Asia/Singapore', // Forces Singapore Timezone
         hour: '2-digit', 
         minute: '2-digit',
         hour12: true 
     });
+    
     const updateText = `Updated: ${timeString}`;
 
     const numStops = allBusData.length;
@@ -84,18 +85,15 @@ function generateSVG(allBusData) {
         xPosition += columnWidth;
     }
 
-    // 2. Add Timestamp at Bottom Right
-    // x = WIDTH - PADDING (right align anchor)
-    // y = HEIGHT - 10 (padding from bottom)
+    // Increased font-size to 35 and added font-weight="bold"
     svgContent += `
-    <text x="${WIDTH - 10}" y="${HEIGHT - 10}" font-size="20" font-family="Arial" font-weight="normal" fill="black" text-anchor="end">
+    <text x="${WIDTH - 15}" y="${HEIGHT - 15}" font-size="35" font-weight="bold" font-family="Arial" fill="black" text-anchor="end">
         ${updateText}
     </text>
     `;
     
     svgContent += `</svg>`;
     
-    // console.log("Generated SVG:", svgContent);
     return svgContent;
 }
 
